@@ -1,0 +1,57 @@
+{
+  "name": "primal-marc",
+  "version": "1.0.0",
+  "description": "AI-powered writing assistant with canvas-based collaborative interface",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "npm run dev --workspace=apps/client",
+    "dev:server": "npm run dev --workspace=apps/server",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "npm run build --workspace=apps/client",
+    "build:server": "npm run build --workspace=apps/server",
+    "test": "npm run test:client && npm run test:server",
+    "test:client": "npm run test --workspace=apps/client",
+    "test:server": "npm run test --workspace=apps/server",
+    "test:coverage": "npm run test:client -- --coverage && npm run test:server -- --coverage",
+    "test:integration": "npm run test:server -- --run integration",
+    "test:e2e": "playwright test",
+    "test:a11y": "npm run test:client -- --run accessibility",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "deploy:client": "npm run deploy --workspace=apps/client",
+    "deploy:server": "npm run deploy --workspace=apps/server",
+    "db:generate": "npx prisma generate",
+    "db:migrate": "npx prisma migrate dev",
+    "db:reset": "npx prisma migrate reset",
+    "db:studio": "npx prisma studio"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "concurrently": "^8.2.0",
+    "eslint": "^8.45.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.3",
+    "prettier": "^3.0.0",
+    "prisma": "^6.14.0",
+    "typescript": "^5.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.14.0"
+  }
+}

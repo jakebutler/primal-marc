@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "Ref": {
+      "command": "npx",
+      "args": [
+        "ref-tools-mcp@latest"
+      ],
+      "env": {
+        "REF_API_KEY": "ref-a279c284359bb86bb279"
+      },
+      "disabled": false,
+      "autoApprove": []
+    },
+    "shadcn": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://www.shadcn.io/api/mcp"
+      ],
+      "env": {},
+      "disabled": false,
+      "autoApprove": [
+        "getComponents"
+      ]
+    }
+  }
+}

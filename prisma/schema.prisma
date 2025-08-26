@@ -1,0 +1,372 @@
+// Primal Marc Database Schema
+// Optimized for SQLite with cost-effective storage and efficient queries
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User model with profile and preferences
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Profile information
+  firstName    String?
+  lastName     String?
+  bio          String?
+  
+  // User preferences (stored as JSON for flexibility)
+  preferences  String?  // JSON: UserPreferences
+  
+  // Writing profile
+  writingGenres     String?  // JSON array of genres
+  experienceLevel   String @default("BEGINNER")
+  
+  // Relations
+  projects     Project[]
+  sessions     Session[]
+  folders      ProjectFolder[]
+  tags         ProjectTag[]
+  collaborationInvites CollaborationInvite[]
+  collaborations ProjectCollaborator[]
+  comments     ProjectComment[]
+  auditLogs    AuditLog[]
+  
+  @@map("users")
+}
+
+// Authentication sessions with refresh token support
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  lastUsedAt   DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// Main project model
+model Project {
+  id          String        @id @default(cuid())
+  userId      String
+  title       String
+  content     String        @default("")
+  status      String @default("DRAFT")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  // Project metadata (stored as JSON for flexibility)
+  metadata    String?       // JSON: ProjectMetadata
+  
+  // Current phase tracking
+  currentPhaseId String?
+  
+  // Organization
+  folderId    String?
+  
+  // Relations
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder       ProjectFolder? @relation(fields: [folderId], references: [id])
+  phases       ProjectPhase[]
+  conversations Conversation[]
+  shareLinks   ShareLink[]
+  collaborationInvites CollaborationInvite[]
+  collaborators ProjectCollaborator[]
+  comments     ProjectComment[]
+  
+  @@index([userId])
+  @@index([status])
+  @@index([updatedAt])
+  @@map("projects")
+}
+
+// Project phases for workflow management
+model ProjectPhase {
+  id          String      @id @default(cuid())
+  projectId   String
+  type        String
+  status      String @default("PENDING")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  completedAt DateTime?
+  
+  // Phase-specific data (stored as JSON)
+  outputs     String?     // JSON: PhaseOutput[]
+  
+  // Relations
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@unique([projectId, type])
+  @@index([projectId])
+  @@map("project_phases")
+}
+
+// Conversation model for AI agent interactions
+model Conversation {
+  id        String   @id @default(cuid())
+  projectId String
+  agentType String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Conversation context (stored as JSON)
+  context   String?  // JSON: ConversationContext
+  
+  // Relations
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messages  Message[]
+  
+  @@index([projectId])
+  @@index([agentType])
+  @@map("conversations")
+}
+
+// Individual messages within conversations
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String
+  content        String
+  agentType      String?
+  timestamp      DateTime @default(now())
+  createdAt      DateTime @default(now())
+  
+  // Message metadata (stored as JSON)
+  metadata       String?  // JSON: MessageMetadata
+  
+  // Relations
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  @@index([conversationId])
+  @@index([createdAt])
+  @@index([timestamp])
+  @@map("messages")
+}
+
+// Cost tracking for LLM usage
+model LLMUsage {
+  id          String   @id @default(cuid())
+  userId      String
+  agentType   String
+  model       String   // e.g., "gpt-3.5-turbo", "gpt-4"
+  promptTokens Int
+  completionTokens Int
+  totalTokens Int
+  cost        Float    // Cost in USD
+  createdAt   DateTime @default(now())
+  
+  // Request metadata
+  requestId   String?  // PromptLayer request ID
+  metadata    String?  // JSON: additional tracking data
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@index([agentType])
+  @@map("llm_usage")
+}
+
+// Database size monitoring
+model DatabaseStats {
+  id          String   @id @default(cuid())
+  tableName   String
+  recordCount Int
+  sizeBytes   Int
+  createdAt   DateTime @default(now())
+  
+  @@index([createdAt])
+  @@map("database_stats")
+}
+
+// Project folders for organization
+model ProjectFolder {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    ProjectFolder? @relation("FolderHierarchy", fields: [parentId], references: [id])
+  subfolders ProjectFolder[] @relation("FolderHierarchy")
+  projects  Project[]
+  
+  @@index([userId])
+  @@index([parentId])
+  @@map("project_folders")
+}
+
+// Project tags for categorization
+model ProjectTag {
+  id        String   @id @default(cuid())
+  name      String
+  color     String?
+  userId    String
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([name, userId])
+  @@index([userId])
+  @@map("project_tags")
+}
+
+// Backup records
+model Backup {
+  id        String   @id @default(cuid())
+  userId    String
+  projectId String?
+  type      String   // "project", "user", "system"
+  fileName  String
+  size      Int
+  checksum  String
+  metadata  String?  // JSON
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@map("backups")
+}
+
+// Share links for project sharing
+model ShareLink {
+  id            String    @id @default(cuid())
+  projectId     String
+  token         String    @unique
+  permissions   String    // "read", "comment", "edit"
+  expiresAt     DateTime?
+  password      String?
+  allowDownload Boolean   @default(false)
+  accessCount   Int       @default(0)
+  lastAccessedAt DateTime?
+  createdAt     DateTime  @default(now())
+  
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@index([projectId])
+  @@index([token])
+  @@map("share_links")
+}
+
+// Collaboration invitations
+model CollaborationInvite {
+  id            String    @id @default(cuid())
+  projectId     String
+  inviterUserId String
+  inviteeEmail  String
+  permissions   String    // "read", "comment", "edit"
+  status        String    @default("pending") // "pending", "accepted", "declined"
+  token         String    @unique
+  expiresAt     DateTime
+  acceptedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  inviter User @relation(fields: [inviterUserId], references: [id], onDelete: Cascade)
+  
+  @@index([projectId])
+  @@index([inviteeEmail])
+  @@index([token])
+  @@map("collaboration_invites")
+}
+
+// Project collaborators
+model ProjectCollaborator {
+  id          String   @id @default(cuid())
+  projectId   String
+  userId      String
+  permissions String   // "read", "comment", "edit"
+  invitedAt   DateTime
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_collaborators")
+}
+
+// Project comments for collaboration
+model ProjectComment {
+  id              String   @id @default(cuid())
+  projectId       String
+  userId          String
+  content         String
+  parentCommentId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  ProjectComment? @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  replies ProjectComment[] @relation("CommentReplies")
+  
+  @@index([projectId])
+  @@index([userId])
+  @@index([parentCommentId])
+  @@map("project_comments")
+}
+
+// Audit logging for security and compliance
+model AuditLog {
+  id          String   @id @default(cuid())
+  eventType   String
+  userId      String?
+  sessionId   String?
+  ipAddress   String?
+  userAgent   String?
+  resource    String?
+  resourceId  String?
+  action      String?
+  details     String?  // JSON: event-specific details
+  metadata    String?  // JSON: additional metadata
+  timestamp   DateTime @default(now())
+  success     Boolean
+  errorMessage String?
+  riskLevel   String   // "LOW", "MEDIUM", "HIGH", "CRITICAL"
+  
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([eventType])
+  @@index([timestamp])
+  @@index([riskLevel])
+  @@index([ipAddress])
+  @@map("audit_logs")
+}
+
+// Note: SQLite doesn't support enums, so we use strings with validation in the application layer
+// Valid values:
+// - ExperienceLevel: "BEGINNER", "INTERMEDIATE", "ADVANCED"
+// - ProjectStatus: "DRAFT", "IN_PROGRESS", "COMPLETED", "ARCHIVED"
+// - PhaseType: "IDEATION", "REFINEMENT", "MEDIA", "FACTCHECK"
+// - PhaseStatus: "PENDING", "ACTIVE", "COMPLETED", "SKIPPED"
+// - AgentType: "IDEATION", "REFINER", "MEDIA", "FACTCHECKER"
+// - MessageRole: "USER", "AGENT", "SYSTEM"
+// - AuditEventType: "USER_LOGIN", "USER_LOGOUT", "AI_REQUEST", etc.
+// - RiskLevel: "LOW", "MEDIUM", "HIGH", "CRITICAL"
