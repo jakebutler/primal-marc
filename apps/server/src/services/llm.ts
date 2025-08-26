@@ -1,5 +1,5 @@
 import OpenAI from 'openai'
-import { PromptLayerOpenAI } from 'promptlayer'
+import PromptLayer from 'promptlayer'
 import { logger } from '../utils/logger.js'
 import { LLMUsageModel, LLMUsageData } from '../models/llm-usage.js'
 import { CacheKeys, CacheTTL } from './cache-service.js'
@@ -133,10 +133,7 @@ export class LLMService {
     })
 
     // Initialize PromptLayer client
-    this.promptLayer = new PromptLayerOpenAI({
-      apiKey: this.config.openaiApiKey,
-      plApiKey: this.config.promptLayerApiKey,
-    })
+    this.promptLayer = PromptLayer({ apiKey: this.config.promptLayerApiKey }).openai
 
     this.rateLimiter = new RateLimiter()
 

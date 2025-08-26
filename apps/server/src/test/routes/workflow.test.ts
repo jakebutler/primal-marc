@@ -3,12 +3,12 @@ import request from 'supertest'
 import express from 'express'
 import workflowRoutes from '../../routes/workflow.js'
 import { WorkflowService } from '../../services/workflow-service.js'
-import { authMiddleware } from '../../middleware/auth.js'
+import { authenticateToken } from '../../middleware/auth.js'
 
 // Mock dependencies
 vi.mock('../../services/workflow-service.js')
 vi.mock('../../middleware/auth.js', () => ({
-  authMiddleware: vi.fn()
+  authenticateToken: vi.fn()
 }))
 vi.mock('../../utils/logger.js', () => ({
   logger: {
@@ -52,7 +52,7 @@ describe('Workflow Routes', () => {
     app.use(express.json())
     
     // Mock auth middleware to add user to request
-    ;(authMiddleware as Mock).mockImplementation((req: any, res: any, next: any) => {
+    ;(authenticateToken as Mock).mockImplementation((req: any, res: any, next: any) => {
       req.user = mockUser
       next()
     })
@@ -91,7 +91,7 @@ describe('Workflow Routes', () => {
     })
 
     it('should return 401 when user not authenticated', async () => {
-      ;(authMiddleware as Mock).mockImplementation((req: any, res: any, next: any) => {
+      ;(authenticateToken as Mock).mockImplementation((req: any, res: any, next: any) => {
         req.user = null
         next()
       })

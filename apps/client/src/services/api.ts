@@ -1,3 +1,18 @@
+// Types
+export interface Project {
+  id: string
+  title: string
+  content: string
+  currentPhase: string
+  createdAt: string
+  updatedAt?: string
+  phases?: Array<{
+    id: string
+    type: string
+    status: string
+  }>
+}
+
 // Mock API service for testing
 export const api = {
   login: async (credentials: { email: string; password: string }) => {
@@ -97,3 +112,6 @@ export const api = {
     }
   }
 }
+
+// Export apiClient as an alias for api for compatibility
+export const apiClient = api

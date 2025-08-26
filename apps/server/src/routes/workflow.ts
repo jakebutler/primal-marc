@@ -1,12 +1,12 @@
 import { Router } from 'express'
 import { WorkflowService } from '../services/workflow-service.js'
-import { authMiddleware } from '../middleware/auth.js'
+import { authenticateToken } from '../middleware/auth.js'
 import { logger } from '../utils/logger.js'
 
 const router = Router()
 
 // Apply authentication middleware to all routes
-router.use(authMiddleware)
+router.use(authenticateToken)
 
 /**
  * GET /api/workflow/:projectId/state

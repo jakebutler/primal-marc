@@ -92,7 +92,7 @@ export class CSRFProtection {
   /**
    * Middleware to verify CSRF token
    */
-  static verifyToken() {
+  static verifyTokenMiddleware() {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       // Skip CSRF for GET, HEAD, OPTIONS requests
       if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
