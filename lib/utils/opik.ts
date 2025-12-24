@@ -29,7 +29,6 @@ export function getOpikHandler(): OpikCallbackHandler | null {
     opikHandler = new OpikCallbackHandler({
       apiKey: apiKey,
       projectName: projectName,
-      tags: ["langchain", "next-js"],
       metadata: {
         environment: process.env.NODE_ENV || "development",
       },
