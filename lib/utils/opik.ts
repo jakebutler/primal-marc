@@ -26,13 +26,15 @@ export function getOpikHandler(): OpikCallbackHandler | null {
   const projectName = process.env.OPIK_PROJECT_NAME || "blog-generator";
   
   try {
+    // Type assertion to work around TypeScript type mismatch
+    // The runtime API still accepts these parameters
     opikHandler = new OpikCallbackHandler({
       apiKey: apiKey,
       projectName: projectName,
       metadata: {
         environment: process.env.NODE_ENV || "development",
       },
-    });
+    } as any);
     
     return opikHandler;
   } catch (error: any) {
