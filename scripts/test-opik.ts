@@ -30,14 +30,14 @@ async function testOpik() {
     console.log("");
     console.log("🔧 Testing OpikCallbackHandler initialization...");
     try {
+      // Type assertion to work around TypeScript type mismatch
       const handler = new OpikCallbackHandler({
         apiKey: apiKey,
         projectName: projectName,
-        tags: ["test"],
         metadata: {
           environment: "test",
         },
-      });
+      } as any);
       console.log("✅ Successfully created OpikCallbackHandler instance");
       console.log("   Handler type:", typeof handler);
       console.log("   Handler methods:", Object.getOwnPropertyNames(Object.getPrototypeOf(handler)));
@@ -45,10 +45,11 @@ async function testOpik() {
       // Test flush methods
       console.log("");
       console.log("🔄 Testing flush methods...");
-      if (typeof handler.flushAsync === 'function') {
+      const handlerAny = handler as any;
+      if (typeof handlerAny.flushAsync === 'function') {
         console.log("   ✅ flushAsync method exists");
         try {
-          await handler.flushAsync();
+          await handlerAny.flushAsync();
           console.log("   ✅ flushAsync() executed successfully");
         } catch (error: any) {
           console.log("   ⚠️  flushAsync() failed (this might be okay if no traces to flush):", error?.message || error);
@@ -57,7 +58,7 @@ async function testOpik() {
         console.log("   ⚠️  flushAsync method not found");
       }
       
-      if (typeof handler.flush === 'function') {
+      if (typeof handlerAny.flush === 'function') {
         console.log("   ✅ flush method exists");
       } else {
         console.log("   ⚠️  flush method not found");
