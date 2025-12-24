@@ -49,10 +49,14 @@ export async function flushOpikTraces(): Promise<void> {
   }
   
   try {
-    if (typeof opikHandler.flushAsync === 'function') {
-      await opikHandler.flushAsync();
-    } else if (typeof opikHandler.flush === 'function') {
-      await opikHandler.flush();
+    // Use type assertion to access methods that may exist at runtime
+    // but aren't in the TypeScript types
+    const handler = opikHandler as any;
+    
+    if (typeof handler.flushAsync === 'function') {
+      await handler.flushAsync();
+    } else if (typeof handler.flush === 'function') {
+      await handler.flush();
     }
   } catch (error: any) {
     console.warn("[Opik] Failed to flush traces:", error?.message || error);

@@ -54,11 +54,15 @@ export async function flushOpikTraces(): Promise<void> {
   }
   
   try {
+    // Use type assertion to access methods that may exist at runtime
+    // but aren't in the TypeScript types
+    const handler = opikHandler as any;
+    
     // Check if flushAsync method exists (it might not be available in all versions)
-    if (typeof opikHandler.flushAsync === 'function') {
-      await opikHandler.flushAsync();
-    } else if (typeof opikHandler.flush === 'function') {
-      await opikHandler.flush();
+    if (typeof handler.flushAsync === 'function') {
+      await handler.flushAsync();
+    } else if (typeof handler.flush === 'function') {
+      await handler.flush();
     } else {
       // Handler exists but no flush method - that's okay
       console.debug("[Opik] No flush method available on handler");
